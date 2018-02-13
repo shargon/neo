@@ -53,7 +53,7 @@ namespace Neo.Network
         {
             if (Interlocked.Exchange(ref disposed, 1) == 0)
             {
-                NeoPlugin.BroadcastLog("Disconnected: " + RemoteEndpoint.ToString() + (error ? " [With errors]" : ""));
+                NeoPlugin.BroadcastLog("Disconnected: " + (RemoteEndpoint == null ? "" : RemoteEndpoint.ToString()) + (error ? " [With errors]" : ""));
 
                 if (stream != null) stream.Dispose();
                 socket.Dispose();
@@ -66,7 +66,7 @@ namespace Neo.Network
             IPEndPoint remoteEndpoint = (IPEndPoint)socket.RemoteEndPoint;
 
             RemoteEndpoint = new IPEndPoint(remoteEndpoint.Address.MapToIPv6(), remoteEndpoint.Port);
-            NeoPlugin.BroadcastLog("Connected: " + RemoteEndpoint.ToString());
+            NeoPlugin.BroadcastLog("Connected: " + (RemoteEndpoint == null ? "" : RemoteEndpoint.ToString()));
 
             stream = new NetworkStream(socket);
             connected = true;
