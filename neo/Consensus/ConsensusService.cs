@@ -3,6 +3,7 @@ using Neo.Cryptography;
 using Neo.IO;
 using Neo.Network;
 using Neo.Network.Payloads;
+using Neo.Plugins;
 using Neo.SmartContract;
 using Neo.Wallets;
 using System;
@@ -189,8 +190,9 @@ namespace Neo.Consensus
                     {
                         message = ConsensusMessage.DeserializeFrom(payload.Data);
                     }
-                    catch
+                    catch (Exception e)
                     {
+                        NeoPlugin.BroadcastLog(e);
                         return;
                     }
                     if (message.ViewNumber != context.ViewNumber && message.Type != ConsensusMessageType.ChangeView)
@@ -336,8 +338,9 @@ namespace Neo.Consensus
                 sc = new ContractParametersContext(payload);
                 wallet.Sign(sc);
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException e)
             {
+                NeoPlugin.BroadcastLog(e);
                 return;
             }
             sc.Verifiable.Scripts = sc.GetScripts();

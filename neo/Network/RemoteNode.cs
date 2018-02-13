@@ -2,6 +2,7 @@
 using Neo.Cryptography;
 using Neo.IO;
 using Neo.Network.Payloads;
+using Neo.Plugins;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -402,13 +403,15 @@ namespace Neo.Network
             {
                 Version = message.Payload.AsSerializable<VersionPayload>();
             }
-            catch (EndOfStreamException)
+            catch (EndOfStreamException e)
             {
+                NeoPlugin.BroadcastLog(e);
                 Disconnect(false);
                 return;
             }
-            catch (FormatException)
+            catch (FormatException e)
             {
+                NeoPlugin.BroadcastLog(e);
                 Disconnect(true);
                 return;
             }
@@ -474,13 +477,15 @@ namespace Neo.Network
                 {
                     OnMessageReceived(message);
                 }
-                catch (EndOfStreamException)
+                catch (EndOfStreamException e)
                 {
+                    NeoPlugin.BroadcastLog(e);
                     Disconnect(false);
                     break;
                 }
-                catch (FormatException)
+                catch (FormatException e)
                 {
+                    NeoPlugin.BroadcastLog(e);
                     Disconnect(true);
                     break;
                 }

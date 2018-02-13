@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Neo.Plugins;
+using System;
 using System.Numerics;
 
 namespace Neo
@@ -51,6 +52,7 @@ namespace Neo
             }
             catch (Exception ex)
             {
+                NeoPlugin.BroadcastLog(ex);
                 throw new InvalidCastException(ex.Message, ex);
             }
         }

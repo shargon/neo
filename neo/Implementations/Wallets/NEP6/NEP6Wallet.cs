@@ -1,5 +1,6 @@
 ﻿using Neo.Core;
 using Neo.IO.Json;
+using Neo.Plugins;
 using Neo.SmartContract;
 using Neo.Wallets;
 using System;
@@ -393,8 +394,9 @@ namespace Neo.Implementations.Wallets.NEP6
                         account.GetKey(password);
                         return true;
                     }
-                    catch (FormatException)
+                    catch (FormatException e)
                     {
+                        NeoPlugin.BroadcastLog(e);
                         return false;
                     }
                 }

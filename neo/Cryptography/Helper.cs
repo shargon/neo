@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Neo.Plugins;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -176,6 +177,10 @@ namespace Neo.Cryptography
                         break;
                     result.Add(b);
                 } while (true);
+            }
+            catch (Exception e)
+            {
+                NeoPlugin.BroadcastLog(e);
             }
             finally
             {

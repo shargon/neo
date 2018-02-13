@@ -1,6 +1,7 @@
 ﻿using Neo.Cryptography.ECC;
 using Neo.IO;
 using Neo.IO.Json;
+using Neo.Plugins;
 using Neo.SmartContract;
 using Neo.Wallets;
 using System;
@@ -120,8 +121,9 @@ namespace Neo.Core
             {
                 json["asset"]["name"] = Name == "" ? null : JObject.Parse(Name);
             }
-            catch (FormatException)
+            catch (FormatException e)
             {
+                NeoPlugin.BroadcastLog(e);
                 json["asset"]["name"] = Name;
             }
             json["asset"]["amount"] = Amount.ToString();

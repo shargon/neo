@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Neo.Plugins;
+using System;
 
 namespace Neo.IO.Data.LevelDB
 {
@@ -43,6 +44,11 @@ namespace Neo.IO.Data.LevelDB
                 if (value == IntPtr.Zero)
                     throw new LevelDBException("not found");
                 return new Slice(value, length);
+            }
+            catch (Exception e)
+            {
+                NeoPlugin.BroadcastLog(e);
+                throw;
             }
             finally
             {
@@ -119,6 +125,7 @@ namespace Neo.IO.Data.LevelDB
                 }
                 catch (LevelDBException ex)
                 {
+                    NeoPlugin.BroadcastLog(ex);
                     if (++retry >= 4) throw;
                     System.IO.File.AppendAllText("leveldb.log", ex.Message + "\r\n");
                 }

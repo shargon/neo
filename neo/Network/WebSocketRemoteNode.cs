@@ -1,4 +1,5 @@
 ﻿using Neo.IO;
+using Neo.Plugins;
 using System;
 using System.IO;
 using System.Net;
@@ -38,10 +39,17 @@ namespace Neo.Network
             {
                 return await Message.DeserializeFromAsync(socket, source.Token);
             }
-            catch (ArgumentException) { }
-            catch (ObjectDisposedException) { }
+            catch (ArgumentException e)
+            {
+                NeoPlugin.BroadcastLog(e);
+            }
+            catch (ObjectDisposedException e)
+            {
+                NeoPlugin.BroadcastLog(e);
+            }
             catch (Exception ex) when (ex is FormatException || ex is IOException || ex is WebSocketException || ex is OperationCanceledException)
             {
+                NeoPlugin.BroadcastLog(ex);
                 Disconnect(false);
             }
             finally
@@ -62,9 +70,13 @@ namespace Neo.Network
                 await socket.SendAsync(segment, WebSocketMessageType.Binary, true, source.Token);
                 return true;
             }
-            catch (ObjectDisposedException) { }
+            catch (ObjectDisposedException e)
+            {
+                NeoPlugin.BroadcastLog(e);
+            }
             catch (Exception ex) when (ex is WebSocketException || ex is OperationCanceledException)
             {
+                NeoPlugin.BroadcastLog(ex);
                 Disconnect(false);
             }
             finally

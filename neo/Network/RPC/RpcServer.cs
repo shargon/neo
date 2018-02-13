@@ -240,8 +240,9 @@ namespace Neo.Network.RPC
                         {
                             scriptHash = Wallet.ToScriptHash(_params[0].AsString());
                         }
-                        catch
+                        catch (Exception e)
                         {
+                            NeoPlugin.BroadcastLog(e);
                             scriptHash = null;
                         }
                         json["address"] = _params[0];
@@ -336,7 +337,10 @@ namespace Neo.Network.RPC
                     {
                         _params = Encoding.UTF8.GetString(Convert.FromBase64String(_params));
                     }
-                    catch (FormatException) { }
+                    catch (FormatException e)
+                    {
+                        NeoPlugin.BroadcastLog(e);
+                    }
                     request = new JObject();
                     if (!string.IsNullOrEmpty(jsonrpc))
                         request["jsonrpc"] = jsonrpc;
@@ -353,7 +357,10 @@ namespace Neo.Network.RPC
                     {
                         request = JObject.Parse(reader);
                     }
-                    catch (FormatException) { }
+                    catch (FormatException e)
+                    {
+                        NeoPlugin.BroadcastLog(e);
+                    }
                 }
             }
             JObject response;
@@ -391,10 +398,12 @@ namespace Neo.Network.RPC
             JObject result = null;
             try
             {
+                NeoPlugin.BroadcastLog("RPC CALL: " + request.ToString());
                 result = Process(request["method"].AsString(), (JArray)request["params"]);
             }
             catch (Exception ex)
             {
+                NeoPlugin.BroadcastLog(ex);
 #if DEBUG
                 return CreateErrorResponse(request["id"], ex.HResult, ex.Message, ex.StackTrace);
 #else

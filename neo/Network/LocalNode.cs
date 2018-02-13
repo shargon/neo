@@ -218,8 +218,9 @@ namespace Neo.Network
                 {
                     entry = await Dns.GetHostEntryAsync(hostNameOrAddress);
                 }
-                catch (SocketException)
+                catch (SocketException e)
                 {
+                    NeoPlugin.BroadcastLog(e);
                     return;
                 }
                 ipAddress = entry.AddressList.FirstOrDefault(p => p.AddressFamily == AddressFamily.InterNetwork || p.IsIPv6Teredo)?.MapToIPv6();
@@ -281,8 +282,9 @@ namespace Neo.Network
                     {
                         Task.WaitAll(tasks, cancellationTokenSource.Token);
                     }
-                    catch (OperationCanceledException)
+                    catch (OperationCanceledException e)
                     {
+                        NeoPlugin.BroadcastLog(e);
                         break;
                     }
                 }
@@ -580,7 +582,10 @@ namespace Neo.Network
                             if (ws_port > 0)
                                 await UPnP.ForwardPortAsync(ws_port, ProtocolType.Tcp, "NEO WebSocket");
                         }
-                        catch { }
+                        catch (Exception e)
+                        {
+                            NeoPlugin.BroadcastLog(e);
+                        }
                     }
                     connectThread.Start();
                     poolThread?.Start();
@@ -594,7 +599,10 @@ namespace Neo.Network
                             Port = (ushort)port;
                             AcceptPeers();
                         }
-                        catch (SocketException) { }
+                        catch (SocketException e)
+                        {
+                            NeoPlugin.BroadcastLog(e);
+                        }
                     }
                     if (ws_port > 0)
                     {

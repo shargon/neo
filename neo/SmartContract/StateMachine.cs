@@ -1,6 +1,7 @@
 ﻿using Neo.Core;
 using Neo.Cryptography.ECC;
 using Neo.IO.Caching;
+using Neo.Plugins;
 using Neo.VM;
 using Neo.VM.Types;
 using System;
@@ -124,8 +125,9 @@ namespace Neo.SmartContract
                 {
                     asset.Expiration = checked(asset.Expiration + years * 2000000u);
                 }
-                catch (OverflowException)
+                catch (OverflowException e)
                 {
+                    NeoPlugin.BroadcastLog(e);
                     asset.Expiration = uint.MaxValue;
                 }
                 engine.EvaluationStack.Push(asset.Expiration);

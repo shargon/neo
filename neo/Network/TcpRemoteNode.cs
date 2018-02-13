@@ -1,4 +1,5 @@
 ﻿using Neo.IO;
+using Neo.Plugins;
 using System;
 using System.IO;
 using System.Net;
@@ -39,8 +40,9 @@ namespace Neo.Network
                 await socket.ConnectAsync(address, ListenerEndpoint.Port);
                 OnConnected();
             }
-            catch (SocketException)
+            catch (SocketException e)
             {
+                NeoPlugin.BroadcastLog(e);
                 Disconnect(false);
                 return false;
             }
@@ -51,6 +53,8 @@ namespace Neo.Network
         {
             if (Interlocked.Exchange(ref disposed, 1) == 0)
             {
+                NeoPlugin.BroadcastLog("Disconnected: " + RemoteEndpoint.ToString() + (error ? " [With errors]" : ""));
+
                 if (stream != null) stream.Dispose();
                 socket.Dispose();
                 base.Disconnect(error);
@@ -60,7 +64,10 @@ namespace Neo.Network
         private void OnConnected()
         {
             IPEndPoint remoteEndpoint = (IPEndPoint)socket.RemoteEndPoint;
+
             RemoteEndpoint = new IPEndPoint(remoteEndpoint.Address.MapToIPv6(), remoteEndpoint.Port);
+            NeoPlugin.BroadcastLog("Connected: " + RemoteEndpoint.ToString());
+
             stream = new NetworkStream(socket);
             connected = true;
         }
@@ -75,10 +82,17 @@ namespace Neo.Network
             {
                 return await Message.DeserializeFromAsync(stream, source.Token);
             }
-            catch (ArgumentException) { }
-            catch (ObjectDisposedException) { }
+            catch (ArgumentException e)
+            {
+                NeoPlugin.BroadcastLog(e);
+            }
+            catch (ObjectDisposedException e)
+            {
+                NeoPlugin.BroadcastLog(e);
+            }
             catch (Exception ex) when (ex is FormatException || ex is IOException || ex is OperationCanceledException)
             {
+                NeoPlugin.BroadcastLog(ex);
                 Disconnect(false);
             }
             finally
@@ -102,9 +116,13 @@ namespace Neo.Network
                 await stream.WriteAsync(buffer, 0, buffer.Length, source.Token);
                 return true;
             }
-            catch (ObjectDisposedException) { }
+            catch (ObjectDisposedException e)
+            {
+                NeoPlugin.BroadcastLog(e);
+            }
             catch (Exception ex) when (ex is IOException || ex is OperationCanceledException)
             {
+                NeoPlugin.BroadcastLog(ex);
                 Disconnect(false);
             }
             finally

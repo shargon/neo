@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Neo.Plugins;
+using System;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -40,8 +41,9 @@ namespace Neo.IO.Json
             {
                 return (T)Enum.Parse(typeof(T), Value, ignoreCase);
             }
-            catch
+            catch (Exception e)
             {
+                NeoPlugin.BroadcastLog(e);
                 throw new InvalidCastException();
             }
         }
@@ -52,8 +54,9 @@ namespace Neo.IO.Json
             {
                 return double.Parse(Value);
             }
-            catch
+            catch (Exception e)
             {
+                NeoPlugin.BroadcastLog(e);
                 throw new InvalidCastException();
             }
         }

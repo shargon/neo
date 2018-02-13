@@ -1,3 +1,4 @@
+using Neo.Plugins;
 using System;
 using System.IO;
 using System.Linq;
@@ -42,8 +43,9 @@ namespace Neo.Network
                 {
                     length = s.Receive(buffer);
                 }
-                catch (SocketException)
+                catch (SocketException e)
                 {
+                    NeoPlugin.BroadcastLog(e);
                     continue;
                 }
                 string resp = Encoding.ASCII.GetString(buffer, 0, length).ToLower();
@@ -79,7 +81,11 @@ namespace Neo.Network
                 XmlNode eventnode = desc.SelectSingleNode("//tns:service[contains(tns:serviceType,\"WANIPConnection\")]/tns:eventSubURL/text()", nsMgr);
                 return CombineUrls(resp, node.Value);
             }
-            catch { return null; }
+            catch (Exception e)
+            {
+                NeoPlugin.BroadcastLog(e);
+                return null;
+            }
         }
 
         private static string CombineUrls(string resp, string p)

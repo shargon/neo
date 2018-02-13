@@ -1,4 +1,5 @@
 ﻿using Neo.IO.Json;
+using Neo.Plugins;
 using Neo.Wallets;
 using System;
 
@@ -79,8 +80,9 @@ namespace Neo.Implementations.Wallets.NEP6
                 Wallet.GetPrivateKeyFromNEP2(nep2key, password, wallet.Scrypt.N, wallet.Scrypt.R, wallet.Scrypt.P);
                 return true;
             }
-            catch (FormatException)
+            catch (FormatException e)
             {
+                NeoPlugin.BroadcastLog(e);
                 return false;
             }
         }

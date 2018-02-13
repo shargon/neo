@@ -1,4 +1,5 @@
-﻿using Neo.VM;
+﻿using Neo.Plugins;
+using Neo.VM;
 using System;
 using System.Linq;
 using System.Security.Cryptography;
@@ -21,6 +22,8 @@ namespace Neo.Cryptography
 
         public byte[] Sign(byte[] message, byte[] prikey, byte[] pubkey)
         {
+            NeoPlugin.BroadcastLog("Sign data: " + message.Length.ToString());
+
             using (var ecdsa = ECDsa.Create(new ECParameters
             {
                 Curve = ECCurve.NamedCurves.nistP256,
@@ -44,8 +47,9 @@ namespace Neo.Cryptography
                 {
                     pubkey = Cryptography.ECC.ECPoint.DecodePoint(pubkey, Cryptography.ECC.ECCurve.Secp256r1).EncodePoint(false).Skip(1).ToArray();
                 }
-                catch
+                catch (Exception e)
                 {
+                    NeoPlugin.BroadcastLog(e);
                     return false;
                 }
             }

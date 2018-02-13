@@ -2,6 +2,7 @@
 using Neo.IO;
 using Neo.IO.Json;
 using Neo.Network;
+using Neo.Plugins;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -178,17 +179,36 @@ namespace Neo.Core
         /// <returns>返回该区块的合法性，返回true即为合法，否则，非法。</returns>
         public bool Verify(bool completely)
         {
-            if (!Verify()) return false;
-            if (Transactions[0].Type != TransactionType.MinerTransaction || Transactions.Skip(1).Any(p => p.Type == TransactionType.MinerTransaction))
+            if (!Verify())
+            {
+                NeoPlugin.BroadcastLog("Block verification fail: " + (_header == null ? "?" : _header.Index.ToString()) +
+                    " Verify" + (completely ? " (Completly)" : ""));
                 return false;
+            }
+            if (Transactions[0].Type != TransactionType.MinerTransaction || Transactions.Skip(1).Any(p => p.Type == TransactionType.MinerTransaction))
+            {
+                NeoPlugin.BroadcastLog("Block verification fail: " + _header.Index + " Type" + (completely ? " (Completly)" : ""));
+                return false;
+            }
             if (completely)
             {
                 if (NextConsensus != Blockchain.GetConsensusAddress(Blockchain.Default.GetValidators(Transactions).ToArray()))
+                {
+                    NeoPlugin.BroadcastLog("Block verification fail: " + _header.Index + " Address" + (completely ? " (Completly)" : ""));
                     return false;
+                }
                 foreach (Transaction tx in Transactions)
-                    if (!tx.Verify(Transactions.Where(p => !p.Hash.Equals(tx.Hash)))) return false;
+                    if (!tx.Verify(Transactions.Where(p => !p.Hash.Equals(tx.Hash))))
+                    {
+                        NeoPlugin.BroadcastLog("Block verification fail: " + _header.Index + " Hash" + (completely ? " (Completly)" : ""));
+                        return false;
+                    }
                 Transaction tx_gen = Transactions.FirstOrDefault(p => p.Type == TransactionType.MinerTransaction);
-                if (tx_gen?.Outputs.Sum(p => p.Value) != CalculateNetFee(Transactions)) return false;
+                if (tx_gen?.Outputs.Sum(p => p.Value) != CalculateNetFee(Transactions))
+                {
+                    NeoPlugin.BroadcastLog("Block verification fail: " + _header.Index + " Fee" + (completely ? " (Completly)" : ""));
+                    return false;
+                }
             }
             return true;
         }

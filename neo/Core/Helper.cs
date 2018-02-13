@@ -1,4 +1,5 @@
 ﻿using Neo.Cryptography;
+using Neo.Plugins;
 using Neo.SmartContract;
 using Neo.VM;
 using Neo.Wallets;
@@ -50,8 +51,9 @@ namespace Neo.Core
             {
                 hashes = verifiable.GetScriptHashesForVerifying();
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException e)
             {
+                NeoPlugin.BroadcastLog(e);
                 return false;
             }
             if (hashes.Length != verifiable.Scripts.Length) return false;

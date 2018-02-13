@@ -1,5 +1,6 @@
 ﻿using Neo.IO;
 using Neo.IO.Json;
+using Neo.Plugins;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -88,12 +89,14 @@ namespace Neo.Core
             {
                 return Blockchain.CalculateBonus(Claims, false) == -result.Amount;
             }
-            catch (ArgumentException)
+            catch (ArgumentException e)
             {
+                NeoPlugin.BroadcastLog(e);
                 return false;
             }
-            catch (NotSupportedException)
+            catch (NotSupportedException e)
             {
+                NeoPlugin.BroadcastLog(e);
                 return false;
             }
         }

@@ -2,6 +2,7 @@
 using Neo.IO;
 using Neo.IO.Caching;
 using Neo.IO.Json;
+using Neo.Plugins;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -119,8 +120,9 @@ namespace Neo.Core
                     {
                         pubkeys = Value.AsSerializableArray<ECPoint>((int)Blockchain.MaxValidators);
                     }
-                    catch (FormatException)
+                    catch (FormatException e)
                     {
+                        NeoPlugin.BroadcastLog(e);
                         return false;
                     }
                     UInt160 hash = new UInt160(Key);

@@ -1,7 +1,9 @@
 ﻿using Neo.Core;
 using Neo.IO.Caching;
+using Neo.Plugins;
 using Neo.VM;
 using Neo.VM.Types;
+using System;
 using System.Numerics;
 using System.Text;
 
@@ -224,7 +226,7 @@ namespace Neo.SmartContract
                         break;
                     case OpCode.UNPACK:
                         StackItem item = EvaluationStack.Peek();
-                        if (item is Array array)
+                        if (item is VM.Types.Array array)
                             size = array.Count;
                         else
                             return false;
@@ -284,8 +286,9 @@ namespace Neo.SmartContract
                     StepInto();
                 }
             }
-            catch
+            catch (Exception e)
             {
+                NeoPlugin.BroadcastLog(e);
                 State |= VMState.FAULT;
                 return false;
             }

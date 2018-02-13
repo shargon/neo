@@ -1,4 +1,5 @@
 ﻿using Neo.IO;
+using Neo.Plugins;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -359,8 +360,9 @@ namespace Neo.Cryptography.ECC
                 point = Parse(value, curve);
                 return true;
             }
-            catch (FormatException)
+            catch (FormatException e)
             {
+                NeoPlugin.BroadcastLog(e);
                 point = null;
                 return false;
             }

@@ -2,6 +2,7 @@
 using Neo.Cryptography.ECC;
 using Neo.IO;
 using Neo.IO.Caching;
+using Neo.Plugins;
 using Neo.VM;
 using Neo.VM.Types;
 using System;
@@ -293,8 +294,9 @@ namespace Neo.SmartContract
                 {
                     SerializeStackItem(engine.EvaluationStack.Pop(), writer);
                 }
-                catch (NotSupportedException)
+                catch (NotSupportedException e)
                 {
+                    NeoPlugin.BroadcastLog(e);
                     return false;
                 }
                 writer.Flush();

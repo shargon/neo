@@ -1,6 +1,7 @@
 ﻿using Neo.Core;
 using Neo.IO;
 using Neo.IO.Data.LevelDB;
+using Neo.Plugins;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -246,9 +247,14 @@ namespace Neo.Wallets
                         db.Write(WriteOptions.Default, batch);
                     }
                 }
-                catch when (Blockchain.Default == null || Blockchain.Default.IsDisposed || db.IsDisposed)
+                catch (Exception e) when (Blockchain.Default == null || Blockchain.Default.IsDisposed || db.IsDisposed)
                 {
+                    NeoPlugin.BroadcastLog(e);
                     return;
+                }
+                catch (Exception e)
+                {
+                    NeoPlugin.BroadcastLog(e);
                 }
             }
         }
