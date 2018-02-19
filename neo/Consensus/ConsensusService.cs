@@ -8,6 +8,7 @@ using Neo.SmartContract;
 using Neo.Wallets;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 
@@ -23,6 +24,8 @@ namespace Neo.Consensus
         private byte timer_view;
         private DateTime block_received_time;
         private bool started = false;
+
+        protected virtual bool RequireCheckPolicy { get { return false; } }
 
         public ConsensusService(LocalNode localNode, Wallet wallet)
         {
@@ -292,6 +295,9 @@ namespace Neo.Consensus
             lock (context)
             {
                 if (timer_height != context.BlockIndex || timer_view != context.ViewNumber) return;
+
+                Stopwatch sw = Stopwatch.StartNew();
+
                 Log($"timeout: height={timer_height} view={timer_view} state={context.State}");
                 if (context.State.HasFlag(ConsensusState.Primary) && !context.State.HasFlag(ConsensusState.RequestSent))
                 {
@@ -301,7 +307,16 @@ namespace Neo.Consensus
                     {
                         context.Timestamp = Math.Max(DateTime.Now.ToTimestamp(), Blockchain.Default.GetHeader(context.PrevHash).Timestamp + 1);
                         context.Nonce = GetNonce();
-                        List<Transaction> transactions = LocalNode.GetMemoryPool().Where(p => CheckPolicy(p)).ToList();
+
+                        List<Transaction> transactions = new List<Transaction>(LocalNode.GetMemoryPoolArray());
+
+                        // Check without mempool lock
+                        if (RequireCheckPolicy)
+                        {
+                            for (int x = transactions.Count - 1; x >= 0; x--)
+                                if (!CheckPolicy(transactions[x])) transactions.RemoveAt(x);
+                        }
+
                         if (transactions.Count >= Settings.Default.MaxTransactionsPerBlock)
                             transactions = transactions.OrderByDescending(p => p.NetworkFee / p.Size).Take(Settings.Default.MaxTransactionsPerBlock - 1).ToList();
                         transactions.Insert(0, CreateMinerTransaction(transactions, context.BlockIndex, context.Nonce));
@@ -317,6 +332,9 @@ namespace Neo.Consensus
                 {
                     RequestChangeView();
                 }
+
+                Log($"endtimeout: elapsed={sw.Elapsed.ToString()}");
+                sw.Stop();
             }
         }
 

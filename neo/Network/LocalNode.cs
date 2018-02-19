@@ -346,6 +346,14 @@ namespace Neo.Network
             }
         }
 
+        public static IEnumerable<Transaction> GetMemoryPoolArray()
+        {
+            lock (mem_pool)
+            {
+                return mem_pool.Values.ToArray();
+            }
+        }
+
         public RemoteNode[] GetRemoteNodes()
         {
             lock (connectedPeers)
