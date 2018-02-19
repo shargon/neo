@@ -266,7 +266,7 @@ namespace Neo.Consensus
             if (!Crypto.Default.VerifySignature(context.MakeHeader().GetHashData(), message.Signature, context.Validators[payload.ValidatorIndex].EncodePoint(false))) return;
             context.Signatures = new byte[context.Validators.Length][];
             context.Signatures[payload.ValidatorIndex] = message.Signature;
-            Dictionary<UInt256, Transaction> mempool = LocalNode.GetMemoryPool().ToDictionary(p => p.Hash);
+            Dictionary<UInt256, Transaction> mempool = LocalNode.GetMemoryPoolArray().AsQueryable().ToDictionary(p => p.Hash);
             foreach (UInt256 hash in context.TransactionHashes.Skip(1))
             {
                 if (mempool.TryGetValue(hash, out Transaction tx))
