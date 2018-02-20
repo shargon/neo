@@ -346,7 +346,7 @@ namespace Neo.Network
             }
         }
 
-        public static IEnumerable<Transaction> GetMemoryPoolArray()
+        public static Transaction[] GetMemoryPoolArray()
         {
             lock (mem_pool)
             {

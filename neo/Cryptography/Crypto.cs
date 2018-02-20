@@ -1,6 +1,7 @@
 ﻿using Neo.Plugins;
 using Neo.VM;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 
@@ -22,8 +23,10 @@ namespace Neo.Cryptography
 
         public byte[] Sign(byte[] message, byte[] prikey, byte[] pubkey)
         {
-            NeoPlugin.BroadcastLog("Sign data: " + message.Length.ToString());
+            Stopwatch sw = Stopwatch.StartNew();
+            NeoPlugin.BroadcastLog("Sign data start: " + message.Length.ToString());
 
+            byte[] ret;
             using (var ecdsa = ECDsa.Create(new ECParameters
             {
                 Curve = ECCurve.NamedCurves.nistP256,
@@ -35,8 +38,11 @@ namespace Neo.Cryptography
                 }
             }))
             {
-                return ecdsa.SignData(message, HashAlgorithmName.SHA256);
+                ret = ecdsa.SignData(message, HashAlgorithmName.SHA256);
             }
+
+            NeoPlugin.BroadcastLog("Sign data end: " + sw.Elapsed.ToString());
+            return ret;
         }
 
         public bool VerifySignature(byte[] message, byte[] signature, byte[] pubkey)
