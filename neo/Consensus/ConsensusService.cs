@@ -298,14 +298,28 @@ namespace Neo.Consensus
             if (tx != null)
             {
                 Stopwatch sw = Stopwatch.StartNew();
-                Log($"{nameof(LocalNode_InventoryReceiving)}");
+                Log($"{nameof(LocalNode_InventoryReceiving)} threads: {Process.GetCurrentProcess().Threads.Count}");
 
                 lock (context)
                 {
                     if (!context.State.HasFlag(ConsensusState.Backup) || !context.State.HasFlag(ConsensusState.RequestReceived) || context.State.HasFlag(ConsensusState.SignatureSent) || context.State.HasFlag(ConsensusState.ViewChanging))
+                    {
+                        Log($"end{nameof(LocalNode_InventoryReceiving)}: WrongState elapsed={sw.Elapsed.ToString()}");
+                        sw.Stop();
                         return;
-                    if (context.Transactions.ContainsKey(tx.Hash)) return;
-                    if (!context.TransactionHashes.Contains(tx.Hash)) return;
+                    }
+                    if (context.Transactions.ContainsKey(tx.Hash))
+                    {
+                        Log($"end{nameof(LocalNode_InventoryReceiving)}: !Transactions.Contains elapsed={sw.Elapsed.ToString()}");
+                        sw.Stop();
+                        return;
+                    }
+                    if (!context.TransactionHashes.Contains(tx.Hash))
+                    {
+                        Log($"end{nameof(LocalNode_InventoryReceiving)}: !TransactionHashes.Contains elapsed={sw.Elapsed.ToString()}");
+                        sw.Stop();
+                        return;
+                    }
 
                     AddTransaction(tx, true);
                     e.Cancel = true;
