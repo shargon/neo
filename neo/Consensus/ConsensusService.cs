@@ -524,7 +524,7 @@ namespace Neo.Consensus
                 return;
             }
             sc.Verifiable.Scripts = sc.GetScripts();
-            localNode.RelayDirectly(payload);
+            localNode.RelayDirectly(payload, true);
 
             Log($"end{nameof(SignAndRelay)}: elapsed={sw.Elapsed.ToString()}");
             sw.Stop();

@@ -447,14 +447,14 @@ namespace Neo.Network
             return relayed;
         }
 
-        public bool RelayDirectly(IInventory inventory)
+        public bool RelayDirectly(IInventory inventory, bool priority = false)
         {
             bool relayed = false;
             lock (connectedPeers)
             {
                 RelayCache.Add(inventory);
                 foreach (RemoteNode node in connectedPeers)
-                    relayed |= node.Relay(inventory);
+                    relayed |= node.Relay(inventory, priority);
             }
             return relayed;
         }

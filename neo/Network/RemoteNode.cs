@@ -68,7 +68,7 @@ namespace Neo.Network
             Disconnect(false);
         }
 
-        public void EnqueueMessage(string command, ISerializable payload = null)
+        public void EnqueueMessage(string command, ISerializable payload = null, bool priority = false)
         {
             bool is_single = false;
             switch (command)
@@ -82,21 +82,27 @@ namespace Neo.Network
                     break;
             }
             Queue<Message> message_queue;
-            switch (command)
+
+            if (priority)
             {
-                case "alert":
-                case "consensus":
-                case "filteradd":
-                case "filterclear":
-                case "filterload":
-                case "getaddr":
-                case "mempool":
-                    message_queue = message_queue_high;
-                    break;
-                default:
-                    message_queue = message_queue_low;
-                    break;
+                message_queue = message_queue_high;
             }
+            else switch (command)
+                {
+                    case "alert":
+                    case "consensus":
+                    case "filteradd":
+                    case "filterclear":
+                    case "filterload":
+                    //case "getaddr":
+                    case "mempool":
+                        message_queue = message_queue_high;
+                        break;
+                    default:
+                        message_queue = message_queue_low;
+                        break;
+                }
+
             lock (message_queue)
             {
                 if (!is_single || message_queue.All(p => p.Command != command))
@@ -348,7 +354,7 @@ namespace Neo.Network
 
         protected abstract Task<Message> ReceiveMessageAsync(TimeSpan timeout);
 
-        internal bool Relay(IInventory data)
+        internal bool Relay(IInventory data, bool priority = false)
         {
             if (Version?.Relay != true) return false;
             if (data.InventoryType == InventoryType.TX)
@@ -357,7 +363,7 @@ namespace Neo.Network
                 if (filter != null && !TestFilter(filter, (Transaction)data))
                     return false;
             }
-            EnqueueMessage("inv", InvPayload.Create(data.InventoryType, data.Hash));
+            EnqueueMessage("inv", InvPayload.Create(data.InventoryType, data.Hash), priority);
             return true;
         }
 
@@ -500,14 +506,19 @@ namespace Neo.Network
 #endif
             while (disposed == 0)
             {
-                Message message = null;
+                Message message;
                 lock (message_queue_high)
                 {
                     if (message_queue_high.Count > 0)
                     {
                         message = message_queue_high.Dequeue();
                     }
+                    else
+                    {
+                        message = null;
+                    }
                 }
+
                 if (message == null)
                 {
                     lock (message_queue_low)
@@ -522,7 +533,7 @@ namespace Neo.Network
                 {
                     for (int i = 0; i < 10 && disposed == 0; i++)
                     {
-                        Thread.Sleep(100);
+                        Thread.Sleep(10);
                     }
                 }
                 else
