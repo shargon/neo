@@ -70,7 +70,7 @@ namespace Neo.Network
 
         public void EnqueueMessage(string command, ISerializable payload = null, bool priority = false)
         {
-            bool is_single = false;
+            bool is_single;
             switch (command)
             {
                 case "addr":
@@ -80,12 +80,16 @@ namespace Neo.Network
                 case "mempool":
                     is_single = true;
                     break;
+                default:
+                    is_single = false;
+                    break;
             }
             Queue<Message> message_queue;
 
             if (priority)
             {
                 message_queue = message_queue_high;
+                is_single = false;
             }
             else switch (command)
                 {
@@ -378,9 +382,9 @@ namespace Neo.Network
             EnqueueMessage("inv", InvPayload.Create(InventoryType.TX, hashes));
         }
 
-        internal void RequestMemoryPool()
+        internal void RequestMemoryPool(bool priority = false)
         {
-            EnqueueMessage("mempool", null);
+            EnqueueMessage("mempool", null, priority);
         }
 
         internal void RequestPeers()

@@ -84,7 +84,7 @@ namespace Neo.Consensus
             block_received_time = DateTime.Now;
             InitializeConsensus(0);
 
-            Log($"end{nameof(Blockchain_PersistCompleted)}: elapsed={sw.Elapsed.ToString()}");
+            Log($"end{nameof(Blockchain_PersistCompleted)}: block_received_time:{block_received_time} elapsed={sw.Elapsed.ToString()}");
             sw.Stop();
         }
 
@@ -129,7 +129,7 @@ namespace Neo.Consensus
                 sc.Verifiable.Scripts = sc.GetScripts();
                 block.Transactions = context.TransactionHashes.Select(p => context.Transactions[p]).ToArray();
                 Log($"relay block: {block.Hash}");
-                if (!localNode.Relay(block))
+                if (!localNode.Relay(block, true))
                     Log($"reject block: {block.Hash}");
                 context.State |= ConsensusState.BlockSent;
             }
@@ -210,16 +210,16 @@ namespace Neo.Consensus
                     timer_view = view_number;
                     TimeSpan span = DateTime.Now - block_received_time;
                     if (span >= Blockchain.TimePerBlock)
-                        timer.Change(0, Timeout.Infinite);
+                        ChangeTimer(TimeSpan.Zero);
                     else
-                        timer.Change(Blockchain.TimePerBlock - span, Timeout.InfiniteTimeSpan);
+                        ChangeTimer(Blockchain.TimePerBlock - span);
                 }
                 else
                 {
                     context.State = ConsensusState.Backup;
                     timer_height = context.BlockIndex;
                     timer_view = view_number;
-                    timer.Change(TimeSpan.FromSeconds(Blockchain.SecondsPerBlock << (view_number + 1)), Timeout.InfiniteTimeSpan);
+                    ChangeTimer(TimeSpan.FromSeconds(Blockchain.SecondsPerBlock << (view_number + 1)));
                 }
             }
 
@@ -407,8 +407,11 @@ namespace Neo.Consensus
             }
             LocalNode.AllowHashes(context.TransactionHashes.Except(context.Transactions.Keys));
             if (context.Transactions.Count < context.TransactionHashes.Length)
-                localNode.SynchronizeMemoryPool();
-
+            {
+                Log($"SynchronizeMemoryPool");
+                localNode.SynchronizeMemoryPool(true);
+                Log($"endSynchronizeMemoryPool");
+            }
             Log($"end{nameof(OnPrepareRequestReceived)}: elapsed={sw.Elapsed.ToString()}");
             sw.Stop();
         }
@@ -480,7 +483,7 @@ namespace Neo.Consensus
                         context.Signatures[context.MyIndex] = context.MakeHeader().Sign(context.KeyPair);
                     }
                     SignAndRelay(context.MakePrepareRequest());
-                    timer.Change(TimeSpan.FromSeconds(Blockchain.SecondsPerBlock << (timer_view + 1)), Timeout.InfiniteTimeSpan);
+                    ChangeTimer(TimeSpan.FromSeconds(Blockchain.SecondsPerBlock << (timer_view + 1)));
                 }
                 else if ((context.State.HasFlag(ConsensusState.Primary) && context.State.HasFlag(ConsensusState.RequestSent)) || context.State.HasFlag(ConsensusState.Backup))
                 {
@@ -499,12 +502,18 @@ namespace Neo.Consensus
             context.State |= ConsensusState.ViewChanging;
             context.ExpectedView[context.MyIndex]++;
             Log($"{nameof(RequestChangeView)}: height={context.BlockIndex} view={context.ViewNumber} nv={context.ExpectedView[context.MyIndex]} state={context.State}");
-            timer.Change(TimeSpan.FromSeconds(Blockchain.SecondsPerBlock << (context.ExpectedView[context.MyIndex] + 1)), Timeout.InfiniteTimeSpan);
+            ChangeTimer(TimeSpan.FromSeconds(Blockchain.SecondsPerBlock << (context.ExpectedView[context.MyIndex] + 1)));
             SignAndRelay(context.MakeChangeView());
             CheckExpectedView(context.ExpectedView[context.MyIndex]);
 
             Log($"end{nameof(RequestChangeView)}: elapsed={sw.Elapsed.ToString()}");
             sw.Stop();
+        }
+
+        void ChangeTimer(TimeSpan newTime)
+        {
+            Log($"{nameof(ChangeTimer)}: newTime={newTime.ToString()}");
+            timer.Change(newTime, Timeout.InfiniteTimeSpan);
         }
 
         private void SignAndRelay(ConsensusPayload payload)

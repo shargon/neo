@@ -418,7 +418,7 @@ namespace Neo.Network
             OnConnected(remoteNode);
         }
 
-        public bool Relay(IInventory inventory)
+        public bool Relay(IInventory inventory, bool priority = false)
         {
             if (inventory is MinerTransaction) return false;
             lock (KnownHashes)
@@ -442,7 +442,7 @@ namespace Neo.Network
             {
                 if (!inventory.Verify()) return false;
             }
-            bool relayed = RelayDirectly(inventory);
+            bool relayed = RelayDirectly(inventory, priority);
             InventoryReceived?.Invoke(this, inventory);
             return relayed;
         }
@@ -621,12 +621,12 @@ namespace Neo.Network
             }
         }
 
-        public void SynchronizeMemoryPool()
+        public void SynchronizeMemoryPool(bool priority = false)
         {
             lock (connectedPeers)
             {
                 foreach (RemoteNode node in connectedPeers)
-                    node.RequestMemoryPool();
+                    node.RequestMemoryPool(priority);
             }
         }
     }
