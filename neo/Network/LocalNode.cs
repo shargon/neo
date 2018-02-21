@@ -418,7 +418,11 @@ namespace Neo.Network
             OnConnected(remoteNode);
         }
 
-        public bool Relay(IInventory inventory, bool priority = false)
+        public bool Relay(IInventory inventory)
+        {
+            return Relay(inventory, false);
+        }
+        public bool Relay(IInventory inventory, bool priority)
         {
             if (inventory is MinerTransaction) return false;
             lock (KnownHashes)

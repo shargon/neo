@@ -423,7 +423,13 @@ namespace Neo.Core
             }).WeightedAverage(p => p.Count, p => p.Weight);
             count = Math.Max(count, StandbyValidators.Length);
             HashSet<ECPoint> sv = new HashSet<ECPoint>(StandbyValidators);
-            ECPoint[] pubkeys = validators.Find().Select(p => p.Value).Where(p => (p.Registered && p.Votes > Fixed8.Zero) || sv.Contains(p.PublicKey)).OrderByDescending(p => p.Votes).ThenBy(p => p.PublicKey).Select(p => p.PublicKey).Take(count).ToArray();
+            ECPoint[] pubkeys = validators.Find().Select(p => p.Value)
+                .Where(p => (p.Registered && p.Votes > Fixed8.Zero) || sv.Contains(p.PublicKey))
+                .OrderByDescending(p => p.Votes)
+                .ThenBy(p => p.PublicKey)
+                .Select(p => p.PublicKey)
+                .Take(count).ToArray();
+
             IEnumerable<ECPoint> result;
             if (pubkeys.Length == count)
             {
