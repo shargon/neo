@@ -244,9 +244,24 @@ namespace Neo.Consensus
 
                     return;
                 }
-                if (payload.Version != ConsensusContext.Version || payload.PrevHash != context.PrevHash || payload.BlockIndex != context.BlockIndex)
+                if (payload.Version != ConsensusContext.Version)
                 {
-                    Log($"end{nameof(LocalNode_InventoryReceived)}: elapsed={sw.Elapsed.ToString()} != Version or Hash");
+                    Log($"end{nameof(LocalNode_InventoryReceived)}: elapsed={sw.Elapsed.ToString()} != Version");
+                    sw.Stop();
+
+                    return;
+                }
+                if (payload.PrevHash != context.PrevHash || payload.BlockIndex != context.BlockIndex)
+                {
+                    // Request blocks
+
+                    if (Blockchain.Default?.HeaderHeight < payload.BlockIndex)
+                    {
+                        foreach (RemoteNode r in localNode.GetRemoteNodes())
+                            r.EnqueueMessage("getheaders", GetBlocksPayload.Create(Blockchain.Default.CurrentHeaderHash), true);
+                    }
+
+                    Log($"end{nameof(LocalNode_InventoryReceived)}: elapsed={sw.Elapsed.ToString()} != Hash");
                     sw.Stop();
 
                     return;
