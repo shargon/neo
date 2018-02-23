@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace Neo.Consensus
 {
-    internal class ConsensusContext
+    public class ConsensusContext
     {
         public const uint Version = 0;
         public ConsensusState State;

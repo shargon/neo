@@ -71,6 +71,16 @@ namespace Neo.Network.Payloads
             return this.GetHashData();
         }
 
+        public UInt160[] PublicGetScriptHashesForVerifying()
+        {
+            if (Blockchain.Default == null)
+                throw new InvalidOperationException();
+            ECPoint[] validators = Blockchain.Default.GetValidators();
+            if (validators.Length <= ValidatorIndex)
+                throw new InvalidOperationException();
+            return new[] { Contract.CreateSignatureRedeemScript(validators[ValidatorIndex]).ToScriptHash() };
+        }
+
         UInt160[] IVerifiable.GetScriptHashesForVerifying()
         {
             if (Blockchain.Default == null)
