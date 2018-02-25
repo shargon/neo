@@ -56,7 +56,11 @@ namespace Neo.Core
                 NeoPlugin.BroadcastLog(e);
                 return false;
             }
-            if (hashes.Length != verifiable.Scripts.Length) return false;
+            if (hashes.Length != verifiable.Scripts.Length)
+            {
+                NeoPlugin.BroadcastLog("Hashes lenght wrong: " + hashes.Length + " != " + verifiable.Scripts.Length);
+                return false;
+            }
             for (int i = 0; i < hashes.Length; i++)
             {
                 byte[] verification = verifiable.Scripts[i].VerificationScript;
@@ -70,15 +74,27 @@ namespace Neo.Core
                 }
                 else
                 {
-                    if (hashes[i] != verifiable.Scripts[i].ScriptHash) return false;
+                    if (hashes[i] != verifiable.Scripts[i].ScriptHash)
+                    {
+                        NeoPlugin.BroadcastLog("Hashes wrong: " + hashes[i] + " != " + verifiable.Scripts[i].ScriptHash);
+                        return false;
+                    }
                 }
                 using (StateReader service = new StateReader())
                 {
                     ApplicationEngine engine = new ApplicationEngine(TriggerType.Verification, verifiable, Blockchain.Default, service, Fixed8.Zero);
                     engine.LoadScript(verification, false);
                     engine.LoadScript(verifiable.Scripts[i].InvocationScript, true);
-                    if (!engine.Execute()) return false;
-                    if (engine.EvaluationStack.Count != 1 || !engine.EvaluationStack.Pop().GetBoolean()) return false;
+                    if (!engine.Execute())
+                    {
+                        NeoPlugin.BroadcastLog("Bad execution");
+                        return false;
+                    }
+                    if (engine.EvaluationStack.Count != 1 || !engine.EvaluationStack.Pop().GetBoolean())
+                    {
+                        NeoPlugin.BroadcastLog("Bad execution: not true");
+                        return false;
+                    }
                 }
             }
             return true;
