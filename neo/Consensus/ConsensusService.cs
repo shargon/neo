@@ -255,11 +255,11 @@ namespace Neo.Consensus
                 {
                     // Request blocks
 
-                    if (Blockchain.Default?.HeaderHeight < payload.BlockIndex)
+                    if (Blockchain.Default?.Height < payload.BlockIndex)
                     {
                         RemoteNode[] nodes = localNode.GetRemoteNodes();
 
-                        Log($"chain sync: nodes: {nodes.Length} expected={payload.BlockIndex} current: {Blockchain.Default?.HeaderHeight}");
+                        Log($"chain sync: nodes: {nodes.Length} expected={payload.BlockIndex} current: {Blockchain.Default?.Height}");
 
                         UInt256 hash = Blockchain.Default.CurrentBlockHash;
 
