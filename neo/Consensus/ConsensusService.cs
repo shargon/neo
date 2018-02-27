@@ -261,7 +261,7 @@ namespace Neo.Consensus
 
                         Log($"chain sync: nodes: {nodes.Length} expected={payload.BlockIndex} current: {Blockchain.Default?.HeaderHeight}");
 
-                        UInt256 hash = Blockchain.Default.CurrentHeaderHash;
+                        UInt256 hash = Blockchain.Default.CurrentBlockHash;
 
                         foreach (RemoteNode r in nodes)
                             r.EnqueueMessage("getheaders", GetBlocksPayload.Create(hash), true);
