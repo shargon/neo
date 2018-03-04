@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Neo.Core;
 using Neo.IO;
 using Neo.IO.Caching;
+using Neo.Network.Payloads;
 using Neo.Plugins;
 using System;
 using System.Collections.Concurrent;
@@ -370,6 +371,16 @@ namespace Neo.Network
                     return null;
                 return tx;
             }
+        }
+
+        internal void RequestGetBlocks()
+        {
+            RemoteNode[] nodes = GetRemoteNodes();
+
+            GetBlocksPayload payload = GetBlocksPayload.Create(Blockchain.Default.CurrentBlockHash);
+
+            foreach (RemoteNode node in nodes)
+                node.EnqueueMessage("getblocks", payload);
         }
 
         private static bool IsIntranetAddress(IPAddress address)

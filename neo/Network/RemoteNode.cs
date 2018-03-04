@@ -56,10 +56,9 @@ namespace Neo.Network
                             missions_global.ExceptWith(missions);
                             needSync = true;
                         }
+
                 if (needSync)
-                    lock (localNode.connectedPeers)
-                        foreach (RemoteNode node in localNode.connectedPeers)
-                            node.EnqueueMessage("getblocks", GetBlocksPayload.Create(Blockchain.Default.CurrentBlockHash));
+                    localNode.RequestGetBlocks();
             }
         }
 
@@ -475,8 +474,10 @@ namespace Neo.Network
                     }
                 }
                 TimeSpan timeout = missions.Count == 0 ? HalfHour : OneMinute;
+
                 message = await ReceiveMessageAsync(timeout);
                 if (message == null) break;
+
                 if (DateTime.Now - mission_start > OneMinute
                     && message.Command != "block" && message.Command != "consensus" && message.Command != "tx")
                 {
