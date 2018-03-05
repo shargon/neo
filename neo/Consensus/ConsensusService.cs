@@ -129,7 +129,7 @@ namespace Neo.Consensus
                 sc.Verifiable.Scripts = sc.GetScripts();
                 block.Transactions = context.TransactionHashes.Select(p => context.Transactions[p]).ToArray();
                 Log($"relay block: {block.Hash}");
-                if (!localNode.Relay(block, true))
+                if (!localNode.Relay(block))
                     Log($"reject block: {block.Hash}");
                 context.State |= ConsensusState.BlockSent;
             }
@@ -425,7 +425,7 @@ namespace Neo.Consensus
             if (context.Transactions.Count < context.TransactionHashes.Length)
             {
                 Log($"SynchronizeMemoryPool");
-                localNode.SynchronizeMemoryPool(true);
+                localNode.SynchronizeMemoryPool();
                 Log($"endSynchronizeMemoryPool");
             }
             Log($"end{nameof(OnPrepareRequestReceived)}: elapsed={sw.Elapsed.ToString()}");
@@ -549,7 +549,7 @@ namespace Neo.Consensus
                 return;
             }
             sc.Verifiable.Scripts = sc.GetScripts();
-            localNode.RelayDirectly(payload, true);
+            localNode.RelayDirectly(payload);
 
             Log($"end{nameof(SignAndRelay)}: elapsed={sw.Elapsed.ToString()}");
             sw.Stop();
