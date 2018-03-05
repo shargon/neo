@@ -45,6 +45,7 @@ namespace Neo.Consensus
                 !CheckPolicy(tx))
             {
                 Log($"reject tx: {tx.Hash}{Environment.NewLine}{tx.ToArray().ToHexString()}");
+                Log($"ChangeView: reject tx");
                 RequestChangeView();
                 Log($"end{nameof(AddTransaction)}: elapsed={sw.Elapsed.ToString()} false");
                 sw.Stop();
@@ -63,6 +64,7 @@ namespace Neo.Consensus
                 }
                 else
                 {
+                    Log($"ChangeView: Not ConsensusAddress");
                     RequestChangeView();
 
                     Log($"end{nameof(AddTransaction)}: elapsed={sw.Elapsed.ToString()} false");
@@ -509,6 +511,7 @@ namespace Neo.Consensus
                 }
                 else if ((context.State.HasFlag(ConsensusState.Primary) && context.State.HasFlag(ConsensusState.RequestSent)) || context.State.HasFlag(ConsensusState.Backup))
                 {
+                    Log($"ChangeView: ConsensusState");
                     RequestChangeView();
                 }
 
