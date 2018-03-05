@@ -524,7 +524,8 @@ namespace Neo.Consensus
             context.State |= ConsensusState.ViewChanging;
             context.ExpectedView[context.MyIndex]++;
             Log($"{nameof(RequestChangeView)}: height={context.BlockIndex} view={context.ViewNumber} nv={context.ExpectedView[context.MyIndex]} state={context.State}");
-            ChangeTimer(TimeSpan.FromSeconds(Blockchain.SecondsPerBlock + (context.ExpectedView[context.MyIndex] + 1)));
+            //ChangeTimer(TimeSpan.FromSeconds(Blockchain.SecondsPerBlock << (context.ExpectedView[context.MyIndex] + 1)));
+            ChangeTimer(TimeSpan.FromSeconds(Blockchain.SecondsPerBlock * 2 + (context.ExpectedView[context.MyIndex] + 1) * 2));
             SignAndRelay(context.MakeChangeView());
             CheckExpectedView(context.ExpectedView[context.MyIndex]);
 
