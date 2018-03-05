@@ -14,9 +14,6 @@ namespace Neo.Network.Queues
                 case MessageCommand.consensus:
                 case MessageCommand.getheaders:
                 case MessageCommand.getblocks:
-                    {
-                        return true;
-                    }
                 case MessageCommand.invpool:
                     {
                         return true;
