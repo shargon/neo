@@ -248,7 +248,7 @@ namespace Neo.Network
 
         private void OnMemPoolMessageReceived()
         {
-            EnqueueMessage("inv", InvPayload.Create(InventoryType.TX, LocalNode.GetMemoryPool().Select(p => p.Hash).ToArray()));
+            EnqueueMessage("invpool", InvPayload.Create(InventoryType.TX, LocalNode.GetMemoryPool().Select(p => p.Hash).ToArray()));
         }
 
         private bool ParseMessage(Message message, out ISerializable payload)
@@ -370,6 +370,7 @@ namespace Neo.Network
                         break;
                     }
                 case "inv":
+                case "invpool":
                     {
                         if (obj is InvPayload payload)
                             OnInvMessageReceived(payload);
