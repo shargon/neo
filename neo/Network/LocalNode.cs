@@ -380,7 +380,7 @@ namespace Neo.Network
             GetBlocksPayload payload = GetBlocksPayload.Create(Blockchain.Default.CurrentBlockHash);
 
             foreach (RemoteNode node in nodes)
-                node.EnqueueMessage("getblocks", payload);
+                node.EnqueueMessage(MessageCommand.getblocks, payload);
         }
 
         private static bool IsIntranetAddress(IPAddress address)

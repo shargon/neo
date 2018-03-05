@@ -6,22 +6,22 @@ namespace Neo.Network.Queues
 {
     public class ReceiveMessageQueue : MessageQueue<ParsedMessage>
     {
-        bool IsHighPriorityMessage(string command, ISerializable payload)
+        bool IsHighPriorityMessage(MessageCommand command, ISerializable payload)
         {
             switch (command)
             {
-                case "block":
-                case "consensus":
-                case "getheaders":
-                case "getblocks":
+                case MessageCommand.block:
+                case MessageCommand.consensus:
+                case MessageCommand.getheaders:
+                case MessageCommand.getblocks:
                     {
                         return true;
                     }
-                case "invpool":
+                case MessageCommand.invpool:
                     {
                         return true;
                     }
-                case "inv":
+                case MessageCommand.inv:
                     {
                         if (payload is InvPayload inv && inv.Type != InventoryType.TX)
                             return true;
@@ -36,7 +36,7 @@ namespace Neo.Network.Queues
         /// </summary>
         /// <param name="command">Command</param>
         /// <param name="payload">Payload</param>
-        public void Enqueue(string command, ISerializable payload)
+        public void Enqueue(MessageCommand command, ISerializable payload)
         {
             Queue<ParsedMessage> message_queue =
                 IsHighPriorityMessage(command, payload) ?
