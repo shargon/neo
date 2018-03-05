@@ -267,6 +267,7 @@ namespace Neo.Network
                 case "getdata": payload = message.Payload.AsSerializable<InvPayload>(); return true;
                 case "getheaders": payload = message.Payload.AsSerializable<GetBlocksPayload>(); return true;
                 case "headers": payload = message.Payload.AsSerializable<HeadersPayload>(); return true;
+                case "invpool":
                 case "inv": payload = message.Payload.AsSerializable<InvPayload>(); return true;
                 case "tx":
                     {
