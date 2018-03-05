@@ -359,6 +359,12 @@ namespace Neo.Consensus
                 sw.Stop();
                 return;
             }
+            if (message.BlockIndex != context.BlockIndex)
+            {
+                Log($"end{nameof(OnChangeViewReceived)}: BlockIndex!= elapsed={sw.Elapsed.ToString()}");
+                sw.Stop();
+                return;
+            }
             context.ExpectedView[payload.ValidatorIndex] = message.NewViewNumber;
             CheckExpectedView(message.NewViewNumber);
 

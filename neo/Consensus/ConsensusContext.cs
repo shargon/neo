@@ -48,7 +48,8 @@ namespace Neo.Consensus
         {
             return MakePayload(new ChangeView
             {
-                NewViewNumber = ExpectedView[MyIndex]
+                NewViewNumber = ExpectedView[MyIndex],
+                BlockIndex = BlockIndex
             });
         }
 
