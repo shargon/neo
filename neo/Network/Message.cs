@@ -75,8 +75,10 @@ namespace Neo.Network
                 message.Payload = await FillBufferAsync(stream, (int)payload_length, cancellationToken);
             else
                 message.Payload = new byte[0];
-            if (GetChecksum(message.Payload) != message.Checksum)
-                throw new FormatException();
+
+            //if (GetChecksum(message.Payload) != message.Checksum)
+            //    throw new FormatException();
+
             return message;
         }
 
