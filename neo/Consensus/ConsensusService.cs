@@ -322,7 +322,7 @@ namespace Neo.Consensus
                 {
                     if (!context.State.HasFlag(ConsensusState.Backup) || !context.State.HasFlag(ConsensusState.RequestReceived) || context.State.HasFlag(ConsensusState.SignatureSent) || context.State.HasFlag(ConsensusState.ViewChanging))
                     {
-                        Log($"end{nameof(LocalNode_InventoryReceiving)}: WrongState elapsed={sw.Elapsed.ToString()}");
+                        Log($"end{nameof(LocalNode_InventoryReceiving)}: WrongState state={context.State} elapsed={sw.Elapsed.ToString()}");
                         sw.Stop();
                         return;
                     }
@@ -381,7 +381,7 @@ namespace Neo.Consensus
 
             if (!context.State.HasFlag(ConsensusState.Backup) || context.State.HasFlag(ConsensusState.RequestReceived))
             {
-                Log($"end{nameof(OnPrepareRequestReceived)} InvalidState elapsed={sw.Elapsed.ToString()}");
+                Log($"end{nameof(OnPrepareRequestReceived)} InvalidState state={context.State} elapsed={sw.Elapsed.ToString()}");
                 sw.Stop();
                 return;
             }
@@ -511,7 +511,7 @@ namespace Neo.Consensus
                 }
                 else if ((context.State.HasFlag(ConsensusState.Primary) && context.State.HasFlag(ConsensusState.RequestSent)) || context.State.HasFlag(ConsensusState.Backup))
                 {
-                    Log($"ChangeView: ConsensusState");
+                    Log($"ChangeView: ConsensusState state={context.State}");
                     RequestChangeView();
                 }
 
