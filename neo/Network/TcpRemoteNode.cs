@@ -1,6 +1,7 @@
 ﻿using Neo.IO;
 using Neo.Plugins;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -53,7 +54,10 @@ namespace Neo.Network
         {
             if (Interlocked.Exchange(ref disposed, 1) == 0)
             {
-                NeoPlugin.BroadcastLog("Disconnected: " + (RemoteEndpoint == null ? "" : RemoteEndpoint.ToString()) + (error ? " [With errors]" : ""));
+                StackTrace stack = new StackTrace();
+
+                NeoPlugin.BroadcastLog("Disconnected: " +
+                    (RemoteEndpoint == null ? "" : RemoteEndpoint.ToString()) + (error ? " [With errors]" : "") + " [" + stack.ToString() + "]");
 
                 if (stream != null) stream.Dispose();
                 socket.Dispose();
