@@ -561,7 +561,11 @@ namespace Neo.Consensus
             sc.Verifiable.Scripts = sc.GetScripts();
             localNode.RelayDirectly(payload);
 
-            Log($"end{nameof(SignAndRelay)}: elapsed={sw.Elapsed.ToString()}");
+            int nodes;
+            lock (localNode.connectedPeers)
+                nodes = localNode.connectedPeers.Count;
+
+            Log($"end{nameof(SignAndRelay)}: elapsed={sw.Elapsed.ToString()} nodes={nodes}");
             sw.Stop();
         }
 
