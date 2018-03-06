@@ -28,6 +28,7 @@ namespace Neo.Network.Queues
                 case MessageCommand.filterclear:
                 case MessageCommand.filterload:
                 case MessageCommand.getaddr:
+                case MessageCommand.getdata:
                 case MessageCommand.mempool: return true;
                 case MessageCommand.inv:
                     {

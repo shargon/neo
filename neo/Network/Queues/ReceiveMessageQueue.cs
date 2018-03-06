@@ -15,6 +15,7 @@ namespace Neo.Network.Queues
                 case MessageCommand.getheaders:
                 case MessageCommand.getblocks:
                 case MessageCommand.invpool:
+                case MessageCommand.getdata:
                     {
                         return true;
                     }

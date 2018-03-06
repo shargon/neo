@@ -222,12 +222,15 @@ namespace Neo.Network
         {
             if (payload.Type != InventoryType.TX && payload.Type != InventoryType.Block && payload.Type != InventoryType.Consensus)
                 return;
+
             UInt256[] hashes = payload.Hashes.Distinct().ToArray();
             lock (LocalNode.KnownHashes)
             {
                 hashes = hashes.Where(p => !LocalNode.KnownHashes.Contains(p)).ToArray();
             }
+
             if (hashes.Length == 0) return;
+
             lock (missions_global)
             {
                 lock (missions)
@@ -242,13 +245,21 @@ namespace Neo.Network
                     }
                 }
             }
+
             if (hashes.Length == 0) return;
+
             EnqueueMessage(MessageCommand.getdata, InvPayload.Create(payload.Type, hashes));
         }
 
         private void OnMemPoolMessageReceived()
         {
-            EnqueueMessage(MessageCommand.invpool, InvPayload.Create(InventoryType.TX, LocalNode.GetMemoryPool().Select(p => p.Hash).ToArray()));
+            UInt256[] txs = LocalNode.GetMemoryPoolArray()
+                .OrderByDescending(p => p.NetworkFee / p.Size)
+                //.ThenBy(p => new BigInteger(p.Hash.ToArray()))
+                .Select(p => p.Hash)
+                .ToArray();
+
+            EnqueueMessage(MessageCommand.invpool, InvPayload.Create(InventoryType.TX, txs));
         }
 
         private bool ParseMessage(Message message, out ISerializable payload)

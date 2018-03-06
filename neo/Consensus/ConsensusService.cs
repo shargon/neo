@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Threading;
 
 namespace Neo.Consensus
@@ -499,7 +500,12 @@ namespace Neo.Consensus
                         }
 
                         if (transactions.Count >= Settings.Default.MaxTransactionsPerBlock)
-                            transactions = transactions.OrderByDescending(p => p.NetworkFee / p.Size).Take(Settings.Default.MaxTransactionsPerBlock - 1).ToList();
+                            transactions = transactions
+                                .OrderByDescending(p => p.NetworkFee / p.Size)
+                                //.ThenBy(p => new BigInteger(p.Hash.ToArray()))
+                                .Take(Settings.Default.MaxTransactionsPerBlock - 1)
+                                .ToList();
+
                         transactions.Insert(0, CreateMinerTransaction(transactions, context.BlockIndex, context.Nonce));
                         context.TransactionHashes = transactions.Select(p => p.Hash).ToArray();
                         context.Transactions = transactions.ToDictionary(p => p.Hash);
