@@ -21,6 +21,8 @@ namespace Neo.Network.Queues
 
             switch (command)
             {
+                case MessageCommand.block:
+                case MessageCommand.merkleblock:
                 case MessageCommand.invpool:
                 case MessageCommand.alert:
                 case MessageCommand.consensus:

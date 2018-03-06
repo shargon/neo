@@ -11,6 +11,7 @@ namespace Neo.Network.Queues
             switch (command)
             {
                 case MessageCommand.block:
+                case MessageCommand.merkleblock:
                 case MessageCommand.consensus:
                 case MessageCommand.getheaders:
                 case MessageCommand.getblocks:
