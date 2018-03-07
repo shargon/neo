@@ -45,8 +45,8 @@ namespace Neo.Consensus
                 !CheckPolicy(tx))
             {
                 Log($"reject tx: {tx.Hash}{Environment.NewLine}{tx.ToArray().ToHexString()}");
-                //Log($"ChangeView: reject tx");
-                // RequestChangeView();
+                Log($"ChangeView: reject tx");
+                RequestChangeView();
                 Log($"end{nameof(AddTransaction)}: elapsed={sw.Elapsed.ToString()} false");
                 sw.Stop();
                 return false;
