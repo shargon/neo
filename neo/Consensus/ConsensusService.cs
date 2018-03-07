@@ -232,7 +232,6 @@ namespace Neo.Consensus
                     if (transactions.Count >= Settings.Default.MaxTransactionsPerBlock)
                         transactions = transactions
                             .OrderByDescending(p => p.NetworkFee / p.Size)
-                            //.ThenBy(p => new BigInteger(p.Hash.ToArray()))
                             .Take(Settings.Default.MaxTransactionsPerBlock - 1)
                             .ToList();
 
@@ -242,9 +241,9 @@ namespace Neo.Consensus
 
                     // Send hashes
 
-                    RemoteNode[] r = localNode.GetRemoteNodes();
-                    foreach (RemoteNode node in r)
-                        node.EnqueueMessage(MessageCommand.invpool, InvPayload.Create(InventoryType.TX, context.TransactionHashes));
+                    InvPayload msg = InvPayload.Create(InventoryType.TX, context.TransactionHashes);
+                    foreach (RemoteNode node in localNode.GetRemoteNodes())
+                        node.EnqueueMessage(MessageCommand.invpool, msg);
                 }
                 else
                 {
