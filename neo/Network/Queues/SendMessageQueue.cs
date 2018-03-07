@@ -7,29 +7,32 @@ namespace Neo.Network.Queues
 {
     public class SendMessageQueue : MessageQueue<Message>
     {
-        bool IsHighPriorityMessage(string command, ISerializable payload, out bool isSingle)
+        bool IsHighPriorityMessage(MessageCommand command, ISerializable payload, out bool isSingle)
         {
             switch (command)
             {
-                case "addr":
-                case "getaddr":
-                case "getblocks":
-                case "getheaders":
-                case "mempool": isSingle = true; break;
+                case MessageCommand.addr:
+                case MessageCommand.getaddr:
+                case MessageCommand.getblocks:
+                case MessageCommand.getheaders:
+                case MessageCommand.mempool: isSingle = true; break;
                 default: isSingle = false; break;
             }
 
             switch (command)
             {
-                case "invpool":
-                case "alert":
-                case "consensus":
-                case "filteradd":
-                case "filterclear":
-                case "filterload":
-                case "getaddr":
-                case "mempool": return true;
-                case "inv":
+                case MessageCommand.block:
+                case MessageCommand.merkleblock:
+                case MessageCommand.invpool:
+                case MessageCommand.alert:
+                case MessageCommand.consensus:
+                case MessageCommand.filteradd:
+                case MessageCommand.filterclear:
+                case MessageCommand.filterload:
+                case MessageCommand.getaddr:
+                case MessageCommand.getdata:
+                case MessageCommand.mempool: return true;
+                case MessageCommand.inv:
                     {
                         if (payload is InvPayload p && p.Type != InventoryType.TX)
                             return true;
@@ -44,7 +47,7 @@ namespace Neo.Network.Queues
         /// </summary>
         /// <param name="command">Command</param>
         /// <param name="payload">Payload</param>
-        public void Enqueue(string command, ISerializable payload)
+        public void Enqueue(MessageCommand command, ISerializable payload)
         {
             Queue<Message> message_queue =
                 IsHighPriorityMessage(command, payload, out bool isSingle) ?

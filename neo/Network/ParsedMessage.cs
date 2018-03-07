@@ -4,7 +4,7 @@ namespace Neo.Network
 {
     public class ParsedMessage
     {
-        public readonly string Command;
+        public readonly MessageCommand Command;
         public readonly ISerializable Payload;
 
         /// <summary>
@@ -12,7 +12,7 @@ namespace Neo.Network
         /// </summary>
         /// <param name="command">Message command</param>
         /// <param name="payload">Message payload</param>
-        public ParsedMessage(string command, ISerializable payload)
+        public ParsedMessage(MessageCommand command, ISerializable payload)
         {
             Command = command;
             Payload = payload;

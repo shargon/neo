@@ -215,6 +215,35 @@ namespace Neo.Consensus
                         ChangeTimer(TimeSpan.Zero);
                     else
                         ChangeTimer(Blockchain.TimePerBlock - span);
+
+                    // Select Block TX
+
+                    context.Nonce = GetNonce();
+
+                    List<Transaction> transactions = new List<Transaction>(LocalNode.GetMemoryPoolArray());
+
+                    // Check without mempool lock
+                    if (RequireCheckPolicy)
+                    {
+                        for (int x = transactions.Count - 1; x >= 0; x--)
+                            if (!CheckPolicy(transactions[x])) transactions.RemoveAt(x);
+                    }
+
+                    if (transactions.Count >= Settings.Default.MaxTransactionsPerBlock)
+                        transactions = transactions
+                            .OrderByDescending(p => p.NetworkFee / p.Size)
+                            .Take(Settings.Default.MaxTransactionsPerBlock - 1)
+                            .ToList();
+
+                    transactions.Insert(0, CreateMinerTransaction(transactions, context.BlockIndex, context.Nonce));
+                    context.TransactionHashes = transactions.Select(p => p.Hash).ToArray();
+                    context.Transactions = transactions.ToDictionary(p => p.Hash);
+
+                    // Send hashes
+
+                    InvPayload msg = InvPayload.Create(InventoryType.TX, context.TransactionHashes);
+                    foreach (RemoteNode node in localNode.GetRemoteNodes())
+                        node.EnqueueMessage(MessageCommand.invpool, msg);
                 }
                 else
                 {
@@ -322,7 +351,7 @@ namespace Neo.Consensus
                 {
                     if (!context.State.HasFlag(ConsensusState.Backup) || !context.State.HasFlag(ConsensusState.RequestReceived) || context.State.HasFlag(ConsensusState.SignatureSent) || context.State.HasFlag(ConsensusState.ViewChanging))
                     {
-                        Log($"end{nameof(LocalNode_InventoryReceiving)}: WrongState elapsed={sw.Elapsed.ToString()}");
+                        Log($"end{nameof(LocalNode_InventoryReceiving)}: WrongState state={context.State} elapsed={sw.Elapsed.ToString()}");
                         sw.Stop();
                         return;
                     }
@@ -381,7 +410,7 @@ namespace Neo.Consensus
 
             if (!context.State.HasFlag(ConsensusState.Backup) || context.State.HasFlag(ConsensusState.RequestReceived))
             {
-                Log($"end{nameof(OnPrepareRequestReceived)} InvalidState elapsed={sw.Elapsed.ToString()}");
+                Log($"end{nameof(OnPrepareRequestReceived)} InvalidState state={context.State} elapsed={sw.Elapsed.ToString()}");
                 sw.Stop();
                 return;
             }
@@ -487,23 +516,8 @@ namespace Neo.Consensus
                     if (!context.State.HasFlag(ConsensusState.SignatureSent))
                     {
                         context.Timestamp = Math.Max(DateTime.Now.ToTimestamp(), Blockchain.Default.GetHeader(context.PrevHash).Timestamp + 1);
-                        context.Nonce = GetNonce();
 
-                        List<Transaction> transactions = new List<Transaction>(LocalNode.GetMemoryPoolArray());
-
-                        // Check without mempool lock
-                        if (RequireCheckPolicy)
-                        {
-                            for (int x = transactions.Count - 1; x >= 0; x--)
-                                if (!CheckPolicy(transactions[x])) transactions.RemoveAt(x);
-                        }
-
-                        if (transactions.Count >= Settings.Default.MaxTransactionsPerBlock)
-                            transactions = transactions.OrderByDescending(p => p.NetworkFee / p.Size).Take(Settings.Default.MaxTransactionsPerBlock - 1).ToList();
-                        transactions.Insert(0, CreateMinerTransaction(transactions, context.BlockIndex, context.Nonce));
-                        context.TransactionHashes = transactions.Select(p => p.Hash).ToArray();
-                        context.Transactions = transactions.ToDictionary(p => p.Hash);
-                        context.NextConsensus = Blockchain.GetConsensusAddress(Blockchain.Default.GetValidators(transactions).ToArray());
+                        context.NextConsensus = Blockchain.GetConsensusAddress(Blockchain.Default.GetValidators(context.Transactions.Values).ToArray());
                         context.Signatures[context.MyIndex] = context.MakeHeader().Sign(context.KeyPair);
                     }
                     SignAndRelay(context.MakePrepareRequest());
@@ -511,7 +525,7 @@ namespace Neo.Consensus
                 }
                 else if ((context.State.HasFlag(ConsensusState.Primary) && context.State.HasFlag(ConsensusState.RequestSent)) || context.State.HasFlag(ConsensusState.Backup))
                 {
-                    Log($"ChangeView: ConsensusState");
+                    Log($"ChangeView: ConsensusState state={context.State}");
                     RequestChangeView();
                 }
 
@@ -527,8 +541,8 @@ namespace Neo.Consensus
             context.State |= ConsensusState.ViewChanging;
             context.ExpectedView[context.MyIndex]++;
             Log($"{nameof(RequestChangeView)}: height={context.BlockIndex} view={context.ViewNumber} nv={context.ExpectedView[context.MyIndex]} state={context.State}");
-            //ChangeTimer(TimeSpan.FromSeconds(Blockchain.SecondsPerBlock << (context.ExpectedView[context.MyIndex] + 1)));
-            ChangeTimer(TimeSpan.FromSeconds(Blockchain.SecondsPerBlock * 2 + (context.ExpectedView[context.MyIndex] + 1) * 2));
+            ChangeTimer(TimeSpan.FromSeconds(Blockchain.SecondsPerBlock << (context.ExpectedView[context.MyIndex] + 1)));
+            //ChangeTimer(TimeSpan.FromSeconds(Blockchain.SecondsPerBlock * 2 + (context.ExpectedView[context.MyIndex] + 1) * 2));
             SignAndRelay(context.MakeChangeView());
             CheckExpectedView(context.ExpectedView[context.MyIndex]);
 
@@ -561,7 +575,11 @@ namespace Neo.Consensus
             sc.Verifiable.Scripts = sc.GetScripts();
             localNode.RelayDirectly(payload);
 
-            Log($"end{nameof(SignAndRelay)}: elapsed={sw.Elapsed.ToString()}");
+            int nodes;
+            lock (localNode.connectedPeers)
+                nodes = localNode.connectedPeers.Count;
+
+            Log($"end{nameof(SignAndRelay)}: elapsed={sw.Elapsed.ToString()} nodes={nodes}");
             sw.Stop();
         }
 
