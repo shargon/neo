@@ -215,6 +215,36 @@ namespace Neo.Consensus
                         ChangeTimer(TimeSpan.Zero);
                     else
                         ChangeTimer(Blockchain.TimePerBlock - span);
+
+                    // Select Block TX
+
+                    context.Nonce = GetNonce();
+
+                    List<Transaction> transactions = new List<Transaction>(LocalNode.GetMemoryPoolArray());
+
+                    // Check without mempool lock
+                    if (RequireCheckPolicy)
+                    {
+                        for (int x = transactions.Count - 1; x >= 0; x--)
+                            if (!CheckPolicy(transactions[x])) transactions.RemoveAt(x);
+                    }
+
+                    if (transactions.Count >= Settings.Default.MaxTransactionsPerBlock)
+                        transactions = transactions
+                            .OrderByDescending(p => p.NetworkFee / p.Size)
+                            //.ThenBy(p => new BigInteger(p.Hash.ToArray()))
+                            .Take(Settings.Default.MaxTransactionsPerBlock - 1)
+                            .ToList();
+
+                    transactions.Insert(0, CreateMinerTransaction(transactions, context.BlockIndex, context.Nonce));
+                    context.TransactionHashes = transactions.Select(p => p.Hash).ToArray();
+                    context.Transactions = transactions.ToDictionary(p => p.Hash);
+
+                    // Send hashes
+
+                    RemoteNode[] r = localNode.GetRemoteNodes();
+                    foreach (RemoteNode node in r)
+                        node.EnqueueMessage(MessageCommand.invpool, InvPayload.Create(InventoryType.TX, context.TransactionHashes));
                 }
                 else
                 {
@@ -487,28 +517,8 @@ namespace Neo.Consensus
                     if (!context.State.HasFlag(ConsensusState.SignatureSent))
                     {
                         context.Timestamp = Math.Max(DateTime.Now.ToTimestamp(), Blockchain.Default.GetHeader(context.PrevHash).Timestamp + 1);
-                        context.Nonce = GetNonce();
 
-                        List<Transaction> transactions = new List<Transaction>(LocalNode.GetMemoryPoolArray());
-
-                        // Check without mempool lock
-                        if (RequireCheckPolicy)
-                        {
-                            for (int x = transactions.Count - 1; x >= 0; x--)
-                                if (!CheckPolicy(transactions[x])) transactions.RemoveAt(x);
-                        }
-
-                        if (transactions.Count >= Settings.Default.MaxTransactionsPerBlock)
-                            transactions = transactions
-                                .OrderByDescending(p => p.NetworkFee / p.Size)
-                                //.ThenBy(p => new BigInteger(p.Hash.ToArray()))
-                                .Take(Settings.Default.MaxTransactionsPerBlock - 1)
-                                .ToList();
-
-                        transactions.Insert(0, CreateMinerTransaction(transactions, context.BlockIndex, context.Nonce));
-                        context.TransactionHashes = transactions.Select(p => p.Hash).ToArray();
-                        context.Transactions = transactions.ToDictionary(p => p.Hash);
-                        context.NextConsensus = Blockchain.GetConsensusAddress(Blockchain.Default.GetValidators(transactions).ToArray());
+                        context.NextConsensus = Blockchain.GetConsensusAddress(Blockchain.Default.GetValidators(context.Transactions.Values).ToArray());
                         context.Signatures[context.MyIndex] = context.MakeHeader().Sign(context.KeyPair);
                     }
                     SignAndRelay(context.MakePrepareRequest());
