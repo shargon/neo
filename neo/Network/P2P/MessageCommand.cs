@@ -15,7 +15,7 @@
         //synchronization
         GetHeaders = 0x20,
         Headers = 0x21,
-        GetBlocks = 0x24,
+        GetBlockHashes = 0x24,
         Mempool = 0x25,
         Inv = 0x27,
         GetData = 0x28,

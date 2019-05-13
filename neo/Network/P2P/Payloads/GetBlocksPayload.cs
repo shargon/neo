@@ -6,30 +6,30 @@ namespace Neo.Network.P2P.Payloads
 {
     public class GetBlocksPayload : ISerializable
     {
-        public UInt256 HashStart;
+        public uint StartHeight;
         public short Count;
 
-        public int Size => sizeof(short) + HashStart.Size;
+        public int Size => sizeof(short) + sizeof(uint);
 
-        public static GetBlocksPayload Create(UInt256 hash_start, short count = -1)
+        public static GetBlocksPayload Create(uint startHeight, short count = -1)
         {
             return new GetBlocksPayload
             {
-                HashStart = hash_start,
+                StartHeight= startHeight,
                 Count = count
             };
         }
 
         void ISerializable.Deserialize(BinaryReader reader)
         {
-            HashStart = reader.ReadSerializable<UInt256>();
+            StartHeight = reader.ReadUInt32();
             Count = reader.ReadInt16();
             if (Count < -1 || Count == 0) throw new FormatException();
         }
 
         void ISerializable.Serialize(BinaryWriter writer)
         {
-            writer.Write(HashStart);
+            writer.Write(StartHeight);
             writer.Write(Count);
         }
     }
