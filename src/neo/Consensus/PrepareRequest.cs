@@ -1,8 +1,6 @@
 using Neo.IO;
 using Neo.Network.P2P.Payloads;
-using System;
 using System.IO;
-using System.Linq;
 
 namespace Neo.Consensus
 {
@@ -13,7 +11,7 @@ namespace Neo.Consensus
         public UInt256[] TransactionHashes;
 
         public override int Size => base.Size
-            + sizeof(ulong)                      //Timestamp
+            + sizeof(ulong)                     //Timestamp
             + sizeof(ulong)                     //Nonce
             + TransactionHashes.GetVarSize();   //TransactionHashes
 
@@ -27,9 +25,8 @@ namespace Neo.Consensus
             base.Deserialize(reader);
             Timestamp = reader.ReadUInt64();
             Nonce = reader.ReadUInt64();
-            TransactionHashes = reader.ReadSerializableArray<UInt256>(Block.MaxTransactionsPerBlock);
-            if (TransactionHashes.Distinct().Count() != TransactionHashes.Length)
-                throw new FormatException();
+            int hashesCount = (int)reader.ReadVarInt(Block.MaxTransactionsPerBlock);
+            TransactionHashes = reader.ReadSerializableFixedAndUniqueArray<UInt256>(hashesCount, (a, b) => a.Equals(b));
         }
 
         public override void Serialize(BinaryWriter writer)

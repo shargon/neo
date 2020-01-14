@@ -194,6 +194,24 @@ namespace Neo.IO
             return array;
         }
 
+        public static T[] ReadSerializableFixedAndUniqueArray<T>(this BinaryReader reader, int count, Func<T, T, bool> comparision) where T : ISerializable, new()
+        {
+            T[] array = new T[count];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = new T();
+                array[i].Deserialize(reader);
+
+                // Check that all are different
+
+                for (int x = 0; x < i; x++)
+                {
+                    if (comparision(array[x], array[i])) throw new FormatException();
+                }
+            }
+            return array;
+        }
+
         public static byte[] ReadVarBytes(this BinaryReader reader, int max = 0x1000000)
         {
             return reader.ReadBytes((int)reader.ReadVarInt((ulong)max));

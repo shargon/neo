@@ -178,8 +178,8 @@ namespace Neo.Network.P2P.Payloads
             if (SystemFee + NetworkFee < SystemFee) throw new FormatException();
             ValidUntilBlock = reader.ReadUInt32();
             Attributes = reader.ReadSerializableArray<TransactionAttribute>(MaxTransactionAttributes);
-            Cosigners = reader.ReadSerializableArray<Cosigner>(MaxCosigners);
-            if (Cosigners.Select(u => u.Account).Distinct().Count() != Cosigners.Length) throw new FormatException();
+            int cosignerCount = (int)reader.ReadVarInt(MaxCosigners);
+            Cosigners = reader.ReadSerializableFixedAndUniqueArray<Cosigner>(cosignerCount, (a, b) => a.Account.Equals(b.Account));
             Script = reader.ReadVarBytes(ushort.MaxValue);
             if (Script.Length == 0) throw new FormatException();
         }

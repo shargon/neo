@@ -60,11 +60,7 @@ namespace Neo.Network.P2P.Payloads
             int count = (int)reader.ReadVarInt(MaxContentsPerBlock);
             if (count == 0) throw new FormatException();
             ConsensusData = reader.ReadSerializable<ConsensusData>();
-            Transactions = new Transaction[count - 1];
-            for (int i = 0; i < Transactions.Length; i++)
-                Transactions[i] = reader.ReadSerializable<Transaction>();
-            if (Transactions.Distinct().Count() != Transactions.Length)
-                throw new FormatException();
+            Transactions = reader.ReadSerializableFixedAndUniqueArray<Transaction>(count - 1, (a, b) => a.Equals(b));
             if (CalculateMerkleRoot(ConsensusData.Hash, Transactions.Select(p => p.Hash)) != MerkleRoot)
                 throw new FormatException();
         }

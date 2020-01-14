@@ -47,11 +47,20 @@ namespace Neo.Network.P2P.Payloads
             UserAgent = reader.ReadVarString(1024);
 
             // Capabilities
+
             Capabilities = new NodeCapability[reader.ReadVarInt(MaxCapabilities)];
             for (int x = 0, max = Capabilities.Length; x < max; x++)
+            {
                 Capabilities[x] = NodeCapability.DeserializeFrom(reader);
-            if (Capabilities.Select(p => p.Type).Distinct().Count() != Capabilities.Length)
-                throw new FormatException();
+
+                // Check that all are different
+
+                for (int y = 0; y < x; y++)
+                {
+                    if (Capabilities[x].Equals(Capabilities[y]))
+                        throw new FormatException();
+                }
+            }
         }
 
         void ISerializable.Serialize(BinaryWriter writer)
