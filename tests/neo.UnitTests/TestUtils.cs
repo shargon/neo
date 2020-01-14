@@ -39,11 +39,12 @@ namespace Neo.UnitTests
             return new NEP6Wallet(wallet);
         }
 
-        public static Transaction GetTransaction()
+        public static Transaction GetTransaction(uint nonce = 0)
         {
             return new Transaction
             {
                 Script = new byte[1],
+                Nonce = nonce,
                 Sender = UInt160.Zero,
                 Attributes = new TransactionAttribute[0],
                 Cosigners = new Cosigner[0],
@@ -78,7 +79,7 @@ namespace Neo.UnitTests
             {
                 for (int i = 0; i < numberOfTransactions; i++)
                 {
-                    transactionsVal[i] = TestUtils.GetTransaction();
+                    transactionsVal[i] = TestUtils.GetTransaction((uint)i);
                 }
             }
 
