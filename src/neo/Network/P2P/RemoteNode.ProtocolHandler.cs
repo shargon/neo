@@ -12,7 +12,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
 
 namespace Neo.Network.P2P
 {
@@ -35,6 +34,12 @@ namespace Neo.Network.P2P
 
         private static readonly TimeSpan TimerInterval = TimeSpan.FromSeconds(30);
         private static readonly TimeSpan PendingTimeout = TimeSpan.FromMinutes(1);
+        private static readonly ParallelQueue<(Transaction, NeoSystem)> VerificationQueue = new ParallelQueue<(Transaction, NeoSystem)>(VerifyTx);
+
+        static RemoteNode()
+        {
+            VerificationQueue.Start(4);
+        }
 
         private readonly ICancelable timer = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(TimerInterval, TimerInterval, Context.Self, new Timer(), ActorRefs.NoSender);
 
@@ -111,14 +116,10 @@ namespace Neo.Network.P2P
                 case MessageCommand.Transaction:
                     Transaction tx = (Transaction)msg.Payload;
                     RenewKnownHashes(tx.Hash);
-                    Task.Run(() =>
+                    if (msg.Payload.Size <= Transaction.MaxTransactionSize)
                     {
-                        if (msg.Payload.Size <= Transaction.MaxTransactionSize)
-                        {
-                            if (tx.VerifyStateIndependent() == VerifyResult.Succeed)
-                                OnInventoryReceived(tx);
-                        }
-                    });
+                        VerificationQueue.Enqueue((tx, system));
+                    }
                     break;
                 case MessageCommand.Verack:
                 case MessageCommand.Version:
@@ -295,6 +296,16 @@ namespace Neo.Network.P2P
             }
             if (headers.Count == 0) return;
             EnqueueMessage(Message.Create(MessageCommand.Headers, HeadersPayload.Create(headers.ToArray())));
+        }
+
+        private static void VerifyTx((Transaction Tx, NeoSystem System) item)
+        {
+            if (item.Tx.VerifyStateIndependent() == VerifyResult.Succeed)
+            {
+                item.System.TaskManager.Tell(item.Tx);
+                item.System.Consensus?.Tell(item.Tx);
+                item.System.Blockchain.Tell(item.Tx, ActorRefs.NoSender);
+            }
         }
 
         private void OnInventoryReceived(IInventory inventory)
