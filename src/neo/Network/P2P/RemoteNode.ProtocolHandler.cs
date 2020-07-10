@@ -26,6 +26,26 @@ namespace Neo.Network.P2P
             }
         }
 
+        private class Verificator
+        {
+            private readonly NeoSystem _system;
+
+            public Verificator(NeoSystem system)
+            {
+                _system = system;
+            }
+
+            public void VerifyTx(Transaction tx)
+            {
+                if (tx.VerifyStateIndependent() == VerifyResult.Succeed)
+                {
+                    _system.TaskManager.Tell(tx);
+                    _system.Consensus?.Tell(tx);
+                    _system.Blockchain.Tell(tx, ActorRefs.NoSender);
+                }
+            }
+        }
+
         private readonly PendingKnownHashesCollection pendingKnownHashes = new PendingKnownHashesCollection();
         private readonly HashSetCache<UInt256> knownHashes = new HashSetCache<UInt256>(Blockchain.Singleton.MemPool.Capacity * 2 / 5);
         private readonly HashSetCache<UInt256> sentHashes = new HashSetCache<UInt256>(Blockchain.Singleton.MemPool.Capacity * 2 / 5);
@@ -34,12 +54,6 @@ namespace Neo.Network.P2P
 
         private static readonly TimeSpan TimerInterval = TimeSpan.FromSeconds(30);
         private static readonly TimeSpan PendingTimeout = TimeSpan.FromMinutes(1);
-        private static readonly ParallelQueue<(Transaction, NeoSystem)> VerificationQueue = new ParallelQueue<(Transaction, NeoSystem)>(VerifyTx);
-
-        static RemoteNode()
-        {
-            VerificationQueue.Start(4);
-        }
 
         private readonly ICancelable timer = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(TimerInterval, TimerInterval, Context.Self, new Timer(), ActorRefs.NoSender);
 
@@ -118,7 +132,7 @@ namespace Neo.Network.P2P
                     RenewKnownHashes(tx.Hash);
                     if (msg.Payload.Size <= Transaction.MaxTransactionSize)
                     {
-                        VerificationQueue.Enqueue((tx, system));
+                        VerificationQueue.Enqueue(tx);
                     }
                     break;
                 case MessageCommand.Verack:
@@ -296,16 +310,6 @@ namespace Neo.Network.P2P
             }
             if (headers.Count == 0) return;
             EnqueueMessage(Message.Create(MessageCommand.Headers, HeadersPayload.Create(headers.ToArray())));
-        }
-
-        private static void VerifyTx((Transaction Tx, NeoSystem System) item)
-        {
-            if (item.Tx.VerifyStateIndependent() == VerifyResult.Succeed)
-            {
-                item.System.TaskManager.Tell(item.Tx);
-                item.System.Consensus?.Tell(item.Tx);
-                item.System.Blockchain.Tell(item.Tx, ActorRefs.NoSender);
-            }
         }
 
         private void OnInventoryReceived(IInventory inventory)

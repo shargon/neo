@@ -25,6 +25,8 @@ namespace Neo.Network.P2P
         private ByteString msg_buffer = ByteString.Empty;
         private bool ack = true;
 
+        private static ParallelQueue<Transaction> VerificationQueue;
+
         public IPEndPoint Listener => new IPEndPoint(Remote.Address, ListenerTcpPort);
         public int ListenerTcpPort { get; private set; } = 0;
         public VersionPayload Version { get; private set; }
@@ -36,6 +38,14 @@ namespace Neo.Network.P2P
         {
             this.system = system;
             LocalNode.Singleton.RemoteNodes.TryAdd(Self, this);
+
+            if (VerificationQueue == null)
+            {
+                // Start verification Queue
+
+                VerificationQueue = new ParallelQueue<Transaction>(new Verificator(system).VerifyTx);
+                VerificationQueue.Start(4);
+            }
         }
 
         /// <summary>
