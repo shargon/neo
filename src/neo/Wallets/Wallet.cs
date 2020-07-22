@@ -267,7 +267,7 @@ namespace Neo.Wallets
                             using (ScriptBuilder sb2 = new ScriptBuilder())
                             {
                                 sb2.EmitAppCall(assetId, "balanceOf", account);
-                                using (ApplicationEngine engine = ApplicationEngine.Run(sb2.ToArray(), snapshot, testMode: true))
+                                using (ApplicationEngine engine = ApplicationEngine.Run(sb2.ToArray(), snapshot, gas: ApplicationEngine.TestGas))
                                 {
                                     if (engine.State.HasFlag(VMState.FAULT))
                                         throw new InvalidOperationException($"Execution for {assetId.ToString()}.balanceOf('{account.ToString()}' fault");
@@ -344,7 +344,7 @@ namespace Neo.Wallets
                 };
 
                 // will try to execute 'transfer' script to check if it works
-                using (ApplicationEngine engine = ApplicationEngine.Run(script, snapshot.Clone(), tx, testMode: true))
+                using (ApplicationEngine engine = ApplicationEngine.Run(script, snapshot.Clone(), tx, gas: ApplicationEngine.TestGas))
                 {
                     if (engine.State == VMState.FAULT)
                     {

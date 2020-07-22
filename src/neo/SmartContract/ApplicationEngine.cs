@@ -25,13 +25,13 @@ namespace Neo.SmartContract
             public bool NeedCheckReturnValue;
         }
 
+        public const long TestGas = uint.MaxValue;
         public static event EventHandler<NotifyEventArgs> Notify;
         public static event EventHandler<LogEventArgs> Log;
 
         private static IApplicationEngineProvider applicationEngineProvider;
         private static Dictionary<uint, InteropDescriptor> services;
         private readonly long gas_amount;
-        private readonly bool testMode;
         private List<NotifyEventArgs> notifications;
         private List<IDisposable> disposables;
         private readonly Dictionary<UInt160, int> invocationCounter = new Dictionary<UInt160, int>();
@@ -42,26 +42,25 @@ namespace Neo.SmartContract
         public IVerifiable ScriptContainer { get; }
         public StoreView Snapshot { get; }
         public long GasConsumed { get; private set; } = 0;
-        public long GasLeft => testMode ? -1 : gas_amount - GasConsumed;
+        public long GasLeft => gas_amount - GasConsumed;
         public Exception FaultException { get; private set; }
         public UInt160 CurrentScriptHash => CurrentContext?.GetState<ExecutionContextState>().ScriptHash;
         public UInt160 CallingScriptHash => CurrentContext?.GetState<ExecutionContextState>().CallingScriptHash;
         public UInt160 EntryScriptHash => EntryContext?.GetState<ExecutionContextState>().ScriptHash;
         public IReadOnlyList<NotifyEventArgs> Notifications => notifications ?? (IReadOnlyList<NotifyEventArgs>)Array.Empty<NotifyEventArgs>();
 
-        protected ApplicationEngine(TriggerType trigger, IVerifiable container, StoreView snapshot, long gas, bool testMode = false)
+        protected ApplicationEngine(TriggerType trigger, IVerifiable container, StoreView snapshot, long gas)
         {
             this.Trigger = trigger;
             this.ScriptContainer = container;
             this.Snapshot = snapshot;
             this.gas_amount = gas;
-            this.testMode = testMode;
         }
 
         internal void AddGas(long gas)
         {
             GasConsumed = checked(GasConsumed + gas);
-            if (!testMode && GasConsumed > gas_amount)
+            if (GasConsumed > gas_amount)
                 throw new InvalidOperationException("Insufficient GAS.");
         }
 
@@ -111,9 +110,9 @@ namespace Neo.SmartContract
             }
         }
 
-        public static ApplicationEngine Create(TriggerType trigger, IVerifiable container, StoreView snapshot, long gas, bool testMode = false)
-            => applicationEngineProvider?.Create(trigger, container, snapshot, gas, testMode)
-                ?? new ApplicationEngine(trigger, container, snapshot, gas, testMode);
+        public static ApplicationEngine Create(TriggerType trigger, IVerifiable container, StoreView snapshot, long gas)
+            => applicationEngineProvider?.Create(trigger, container, snapshot, gas)
+                ?? new ApplicationEngine(trigger, container, snapshot, gas);
 
         private InvocationState GetInvocationState(ExecutionContext context)
         {
@@ -277,20 +276,20 @@ namespace Neo.SmartContract
         }
 
         public static ApplicationEngine Run(byte[] script, StoreView snapshot,
-            IVerifiable container = null, Block persistingBlock = null, int offset = 0, bool testMode = false, long gas = default)
+            IVerifiable container = null, Block persistingBlock = null, int offset = 0, long gas = default)
         {
             snapshot.PersistingBlock = persistingBlock ?? snapshot.PersistingBlock ?? CreateDummyBlock(snapshot);
-            ApplicationEngine engine = Create(TriggerType.Application, container, snapshot, gas, testMode);
+            ApplicationEngine engine = Create(TriggerType.Application, container, snapshot, gas);
             engine.LoadScript(script).InstructionPointer = offset;
             engine.Execute();
             return engine;
         }
 
-        public static ApplicationEngine Run(byte[] script, IVerifiable container = null, Block persistingBlock = null, int offset = 0, bool testMode = false, long gas = default)
+        public static ApplicationEngine Run(byte[] script, IVerifiable container = null, Block persistingBlock = null, int offset = 0, long gas = default)
         {
             using (SnapshotView snapshot = Blockchain.Singleton.GetSnapshot())
             {
-                return Run(script, snapshot, container, persistingBlock, offset, testMode, gas);
+                return Run(script, snapshot, container, persistingBlock, offset, gas);
             }
         }
 
