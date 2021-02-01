@@ -5,6 +5,7 @@ using Neo.IO;
 using Neo.Persistence;
 using Neo.VM;
 using Neo.VM.Types;
+using Neo.Wallets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -172,6 +173,11 @@ namespace Neo.SmartContract.Native
             if (!nameRegex.IsMatch(name)) throw new ArgumentException(null, nameof(name));
             switch (type)
             {
+                case RecordType.NEO:
+                    if (!UInt160.TryParse(data, out var scriptHash))
+                        scriptHash = data.ToScriptHash();
+                    data = scriptHash.ToString();
+                    break;
                 case RecordType.A:
                     if (!ipv4Regex.IsMatch(data)) throw new FormatException();
                     if (!IPAddress.TryParse(data, out IPAddress address)) throw new FormatException();

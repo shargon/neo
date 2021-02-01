@@ -2,6 +2,10 @@ namespace Neo.SmartContract.Native
 {
     public enum RecordType : byte
     {
+        #region 
+        NEO = 0,
+        #endregion
+
         #region [RFC 1035](https://tools.ietf.org/html/rfc1035)
         A = 1,
         CNAME = 5,
